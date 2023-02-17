@@ -6,21 +6,39 @@ object DistressSignal {
         Source.fromFile(filename).getLines.toList.filter(_ != "").grouped(2).toList
     }
 
-    def splitList(list: Seq[String]): Seq[String] = {
-        list match {
-            case Nil => Nil
-            case head :: tail => head.split(",").toSeq ++ splitList(tail)
+    def splitList(list: String): Seq[String] = {
+        val cutList = list.substring(1, list.length - 1)
+        var depth = 0
+        var tmp: String = ""
+        var result: Seq[String] = Seq()
+        for(i <- 0 to cutList.length - 1) {
+            if(cutList(i) == '[') {
+                depth += 1
+            } else if(cutList(i) == ']') {
+                depth -= 1
+            } else if(cutList(i) == ',' && depth == 0) {
+                result = result :+ tmp
+                tmp = ""
+            } else {
+                tmp += cutList(i)
+            }
         }
+        result = result :+ tmp
+        result
     }
 
     def compare(left: Seq[String], right: Seq[String]): Boolean = {
-        
+        true
     }
 
     def printReadFile(filename: String): Unit = {
         val file = readInput(filename)
         file.foreach(pair => {
-            
+            val pair1Split = splitList(pair(0))
+            val pair2Split = splitList(pair(1))
+            pair1Split.foreach(ch => println(" " + ch))
+            pair2Split.foreach(ch => println(" " + ch))
+            compare(pair1Split, pair2Split)
         })
     }
 
