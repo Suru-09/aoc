@@ -1,0 +1,11 @@
+# ignore intelliJ
+*.idea
+
+# ignore vscode
+*.vscode
+
+# ignore metal
+*.metals
+
+# ignore JVM bytecode
+*.class
