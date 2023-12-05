@@ -9,3 +9,7 @@
 
 # ignore JVM bytecode
 *.class
+
+# Ignore Rust
+**/target/**
+Cargo.lock
