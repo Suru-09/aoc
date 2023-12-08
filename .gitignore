@@ -13,3 +13,6 @@
 # Ignore Rust
 **/target/**
 Cargo.lock
+
+# Ignore MacOS stuff
+.DS_Store
