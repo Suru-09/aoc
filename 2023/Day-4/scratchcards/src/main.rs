@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug)] #[derive(Clone)]
 struct Card {
     number: usize,
     winning_numbers: Vec<usize>,
@@ -14,10 +14,6 @@ impl Card {
         self.winning_numbers.contains(&number)
     }
 
-    fn is_scratch_number(&self, number: usize) -> bool {
-        self.scratch_numbers.contains(&number)
-    }
-
     fn get_cards_points(&self) -> usize {
         let mut points = 0;
         for number in self.scratch_numbers.iter() {
@@ -30,6 +26,16 @@ impl Card {
             }
         }
         points
+    }
+
+    fn count_matching_numbers(&self) -> usize {
+        let mut count = 0;
+        self.scratch_numbers.iter().for_each(|number| {
+            if self.is_winning_number(*number) {
+                count += 1;
+            }
+        });
+        count
     }
 }
 
@@ -86,10 +92,38 @@ mod part_1 {
 }
 
 mod part_2 {
+    use std::collections::HashMap;
+    use crate::{parse_input, read_input, parse_card};
 
+    pub fn solve() {
+        let mut cards: HashMap<usize, usize> = HashMap::new();
+        let input = read_input();
+
+        let result = parse_input(&input)
+            .iter()
+            .map(|line|{
+                let card = parse_card(line);
+                let count_winning_numbers = card.count_matching_numbers();
+                let amount_of_current_card = cards.get(&card.number).unwrap_or(&0) + 1;
+
+                if amount_of_current_card > 0 {
+                    let from = card.number + 1;
+                    let to = card.number + count_winning_numbers;
+                    for winning_id in from..to + 1 {
+                        *cards.entry(winning_id).or_insert(0) += amount_of_current_card;
+                    }
+                }
+                
+                amount_of_current_card
+            })
+            .sum::<usize>();
+
+        println!("Result: {}", result);
+    }
 }
 
 
 fn main() {
-    part_1::solve();
+    part_1::solve();    // 25010
+    part_2::solve();    // 9924412
 }
