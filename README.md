@@ -5,7 +5,7 @@
 | Advent of Code - Year | Stars Earned :star: | Language Used |
 |------------------------|--------------|---------------------|
 | 2022                   |  24/50       |       Scala         |
-| 2023                   | 3/50         |       Rust          |
+| 2023                   | 5/50         |       Rust          |
 
 ## How to run
 

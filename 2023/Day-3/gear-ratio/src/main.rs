@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 #[derive(Debug)]
 struct Matrix {
     data: Vec<Vec<char>>,
@@ -39,7 +40,7 @@ impl Matrix {
             }
             if let Some(symbol) = self.get(new_row as usize, new_col as usize) { 
                 if self.is_symbol(symbol) {
-                    println!("Value {} near symbol with coords: row:<{}>, col<{}>", symbol, row, col);
+                    //println!("Value {} near symbol with coords: row:<{}>, col<{}>", symbol, row, col);
                     return true;
                 }
             }
@@ -47,8 +48,22 @@ impl Matrix {
         false
     }
 
-    fn how_many_numbers_nearby(&self, row: usize, col: usize, numbers: &Vec<(usize, usize, usize)>) -> usize {
+    fn does_number_already_exists(&self, number_to_check: &Vec<(usize, usize, usize)>, numbers: &HashSet<Vec<(usize, usize, usize)>>) -> bool {
+        numbers.iter().any(|num| {
+            num.iter().all(|(row, col, digit)| {
+                number_to_check.iter().any(|(row2, col2, digit2)| {
+                    if *row == *row2 && *col == *col2 && *digit == *digit2 {
+                        return true;
+                    }
+                    false
+                })
+            })
+        })
+    }
+
+    fn how_many_numbers_nearby(&self, row: usize, col: usize, numbers: &Vec<Vec<(usize, usize, usize)>>) -> (usize, HashSet<Vec<(usize, usize, usize)>>) {
         let mut count: usize = 0;
+        let mut numbers_near_star = HashSet::new();
         let directions: Vec<(i32, i32)> = vec![
             (-1, 0), // up
             (1, 0), // down
@@ -66,13 +81,20 @@ impl Matrix {
             if new_row < 0 || new_col < 0 {
                 continue;
             }
-            if let Some(symbol) = self.get(new_row as usize, new_col as usize) { 
-                if symbol.is_digit(10) {
-                    count += 1;
+
+            numbers.iter().for_each(|number| {
+                // if any of the numbers coords match the current coords
+                if number.iter().any(|(row, col, _)| *row == new_row as usize && *col == new_col as usize) {
+                    println!("Number: {:?} near star with coords: row:<{}>, col<{}>", number, row, col);
+                    println!("Number already exists: {}", self.does_number_already_exists(number, &numbers_near_star));
+                    if !self.does_number_already_exists(number, &numbers_near_star) {
+                        count += 1;
+                        numbers_near_star.insert(number.clone());
+                    }
                 }
-            }
+            });
         }
-        count
+        (count, numbers_near_star)
     }
 
     fn is_symbol(&self, value: char) -> bool {
@@ -90,6 +112,34 @@ impl Matrix {
             }
         }
         false
+    }
+
+    fn prod_of_numbers(&self, numbers: &HashSet<Vec<(usize, usize, usize)>>) -> usize {
+        let mut product: usize = 1;
+        numbers.iter().for_each(|number| {
+            product *= self.extract_number(number.to_vec());
+        });
+        product
+    }
+
+    fn are_numbers_near_star(&self, stars: &Vec<(usize, usize)>, numbers: &Vec<Vec<(usize, usize, usize)>>) -> usize {
+        let mut sum: usize = 0;
+        stars.iter()
+             .filter(|(row, col)| {
+                let (count, _) = self.how_many_numbers_nearby(*row, *col, numbers);
+                println!("Count: {} for star with coords: row:<{}>, col<{}>", count, row, col);
+                if count == 2 {
+                    return true;
+                }
+                false
+             })
+             .for_each(|(row, col)| {
+                let (_, numbers_near_star) = self.how_many_numbers_nearby(*row, *col, numbers);
+                let prod = self.prod_of_numbers(&numbers_near_star);
+                println!("Numbers near star: {:?}, prod: {}", numbers_near_star, prod);
+                sum += prod;
+             });
+        sum
     }
 
     fn extract_number(&self, num: Vec<(usize, usize, usize)>) -> usize {
@@ -178,10 +228,17 @@ mod part_2 {
     use crate::{parse_input, read_input};
 
     pub fn solve() {
+        let input = read_input();
+        let matrix = parse_input(&input);
+        let numbers = matrix.get_all_numbers();
+        let stars = matrix.get_all_stars();
+        println!("Stars: {:?}", stars);
+        println!("Numbers: {:?}", numbers);
+        println!("Sum: {}", matrix.are_numbers_near_star(&stars, &numbers));
     }
 }
 
 fn main() {
     part_1::solve();    // 527144
-    part_2::solve();    // 3793408241
+    part_2::solve();    // 81463996
 }
