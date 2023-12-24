@@ -13,7 +13,6 @@ mod part_1 {
         println!("Product is for part1: {}", calculate_all_win_possibilities());
     }
 }
-
 mod part_2 {
     use crate::{parse_input, count_winning_combinations};
 
@@ -29,7 +28,6 @@ mod part_2 {
     }
 }
 
-
 fn count_winning_combinations((time, dist_to_beat): (u64, u64)) -> u64 {
     let initial_speed = 0;
     let mut count = 0;
@@ -41,8 +39,6 @@ fn count_winning_combinations((time, dist_to_beat): (u64, u64)) -> u64 {
     }
     count
 }
-
-
 
 fn read_input() -> Vec<String> {
     std::fs::read_to_string("input.txt")
