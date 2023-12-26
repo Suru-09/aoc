@@ -12,13 +12,15 @@
 ### For Scala
 
 - each problem is in a single file, therefore just run it:
-```
+
+```bash
   scala <file_name>
 ```
 
 ### For Rust
 
 - go in the problem's directory and use:
-```
+
+```bash
   cargo run
 ```
