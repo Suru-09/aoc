@@ -5,17 +5,20 @@ mod part_1 {
 
     pub fn solve() {
         let answer = find_furthest_pipe();
-        println!("The answer is: {}", answer);
+        println!("The answer for part 1 is: {}", answer);
     }
 }
 
 mod part_2 {
-    pub fn solve() {
+    use crate::ray_casting;
 
+    pub fn solve() {
+        let answer = ray_casting();
+        println!("The answer for part 2 is: {}", answer);
     }
 }
 
-#[derive(PartialEq)] #[derive(Debug)]
+#[derive(PartialEq)] #[derive(Debug)] #[derive(Clone)]
 enum Tile {
     VerticalPipe,
     HorizontalPipe,
@@ -66,7 +69,7 @@ impl Tile {
 }
 
 fn parse_maze() -> Vec<String> {
-    std::fs::read_to_string("input.txt")
+    std::fs::read_to_string("example.txt")
         .unwrap().lines()
         .map(|line| line.to_string())
         .collect::<Vec<_>>()
@@ -121,8 +124,7 @@ fn can_connect_tiles(new_tile: &Tile, old_coords: (i64, i64), new_coords: (i64, 
         return true
     }
     let (x, y) = new_coords;
-    
-    println!("{:?}", new_tile);
+
     for (dx, dy) in new_tile.get_directions().iter() {
         let val_x = x + dx;
         let val_y = y + dy;
@@ -131,6 +133,14 @@ fn can_connect_tiles(new_tile: &Tile, old_coords: (i64, i64), new_coords: (i64, 
         }
     }
     false
+}
+
+/**
+ * ray going from left to right
+ * direction tile_1 -> tile_2
+ */
+fn can_connect_two_tiles(tile_1: &Tile, tile_2: &Tile) -> bool {
+    tile_2.get_directions().contains(&LEFT) && tile_1.get_directions().contains(&RIGHT)
 }
 
 fn depth_first_search(maze: &Vec<String>, distances: &mut Vec<Vec<usize>>, start_coords: (usize, usize)) {
@@ -144,21 +154,89 @@ fn depth_first_search(maze: &Vec<String>, distances: &mut Vec<Vec<usize>>, start
         if distances[x][y] <= distance {
             continue;
         }
-
         distances[x][y] = distance;
-        println!("Distance: {distance}");
 
         tile.get_directions().iter().for_each(|(dx, dy)| {
             let new_x = x as i64 + dx;
             let new_y = y as i64 + dy;
 
             let tile_valid = is_tile_valid(&new_x, &new_y, &maze, (x as i64, y as i64));
-            println!("Valid Tile? : {tile_valid}");
             if  tile_valid {
                 stack.push_back(((new_x as usize, new_y as usize), distance + 1));
             }
         });
     }
+}
+
+fn included_tiles_on_a_row(row: &str) -> usize {
+    let mut ray_count = 0;
+    let mut included_tiles = 0;
+    let mut first = true;
+    let mut last_tile = Tile::get_type(&row.chars().nth(0).unwrap());
+    if last_tile != Tile::Dot {
+        ray_count += 1;
+    }
+    println!("Row: {}", row);
+    for (tile_index, tile_ch) in row.chars().enumerate() {
+        let tile = Tile::get_type(&tile_ch);
+
+        if first {
+            first = false;
+            continue;
+        }
+
+        println!("{:?} -> {:?}", last_tile, tile);
+
+        match (last_tile.clone(), tile.clone()) {
+            (Tile::Dot, Tile::Dot) => {}
+            (Tile::Dot, _) => {
+                println!("Count from {} to {}", ray_count, ray_count + 1);
+                ray_count += 1;
+            }
+            (_, Tile::Dot) => {
+            },
+            (_, _) => {
+                if !can_connect_two_tiles(&last_tile, &tile) {
+                    println!("Count from {} to {}", ray_count, ray_count + 1);
+                    ray_count += 1;
+                }
+            }
+        }
+
+        if ray_count % 2 != 0 && tile == Tile::Dot { 
+            println!("Found included tile: {:?}", tile);
+            included_tiles += 1;
+        }
+
+        last_tile = tile;
+    }
+
+    println!("Ray Count: {}, included_tiles: {}", ray_count, included_tiles);
+    included_tiles
+}
+
+fn ray_casting() -> usize {
+    let mut maze = parse_maze();
+    let mut distances = vec![vec![usize::MAX; maze.first().unwrap().len()]; maze.len()];
+    let start_coordinates = find_start_coordinates(&maze);
+    depth_first_search(&maze, &mut distances, start_coordinates);
+    
+    distances.iter()
+        .enumerate()
+        .flat_map(|(x, dist_vec)| {
+            dist_vec.iter()
+                .enumerate()
+                .filter(|(_, dist)| **dist == usize::MAX)
+                .map(move |(y, _)| (x, y))
+        })
+        .for_each(|(x, y)| {
+            maze[x].replace_range(y..y + 1, ".");
+        });
+
+    maze.into_iter()
+        .enumerate()
+        .map(|(r_index, row)| included_tiles_on_a_row(&row))
+        .fold(0, |acc, value| acc + value)
 }
 
 fn main() {
