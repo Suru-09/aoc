@@ -2,7 +2,7 @@ pub mod args;
 
 use args::args::Args;
 use clap::Parser;
-use reqwest::header::COOKIE;
+use reqwest::header::{ACCEPT, ACCEPT_ENCODING, CONNECTION, COOKIE, HOST};
 use std::path::Path;
 use std::process::Command;
 use std::{env, fs};
@@ -86,7 +86,15 @@ fn write_template(args: &Args) {
 pub async fn download_input(path: &str) -> Result<String, Box<dyn std::error::Error>> {
     let cookie = env::var("COOKIE").expect("COOKIE env variable was not set!");
     let client = reqwest::Client::new();
-    let response: reqwest::Response = client.get(path).header(COOKIE, cookie).send().await?;
+    let response: reqwest::Response = client
+        .get(path)
+        .header(COOKIE, cookie)
+        .header(ACCEPT, "*/*")
+        .header(ACCEPT_ENCODING, "gzip, deflate, br")
+        .header(HOST, "adventofcode.com")
+        .header(CONNECTION, "keep-alive")
+        .send()
+        .await?;
 
     println!("Status: {}", response.status());
     println!("Headers: {:?}", response.headers());
@@ -96,7 +104,10 @@ pub async fn download_input(path: &str) -> Result<String, Box<dyn std::error::Er
         return Err(Box::from("Failed to download file"));
     }
 
-    Ok(response.text().await?)
+    let text = response.text().await?;
+    println!("Text: {}", text);
+
+    Ok(text)
 }
 
 pub async fn create_input_files(args: &Args) {
@@ -109,9 +120,9 @@ pub async fn create_input_files(args: &Args) {
     println!("Download path: {}", download_path);
     match download_input(&download_path).await {
         Ok(input) => {
-            std::fs::write(format!("./Day-{}/example.txt", aoc_day), input)
+            std::fs::write(format!("./Day-{}/example.txt", aoc_day), "")
                 .expect("Should be able to write example file");
-            std::fs::write(format!("./Day-{}/input.txt", aoc_day), "")
+            std::fs::write(format!("./Day-{}/input.txt", aoc_day), input)
                 .expect("Should be able to write input file");
         }
         Err(e) => panic!("Could not download input file err: {:?}", e),
