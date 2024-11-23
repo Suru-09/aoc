@@ -19,3 +19,6 @@ Cargo.lock
 
 # Ignore input file, because aoc does not like sharing that..
 input.txt
+
+# ignore cookie file
+cookie.txt
