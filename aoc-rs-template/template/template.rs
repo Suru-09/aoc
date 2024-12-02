@@ -1,7 +1,7 @@
 use std::fs;
 
-const INPUT: &str = "../input.txt";
-const EXAMPLE: &str = "../example.txt";
+const INPUT: &str = "input.txt";
+const EXAMPLE: &str = "example.txt";
 
 pub fn solve_part_1() {}
 
@@ -22,6 +22,6 @@ mod utils {
 }
 
 fn main() {
-    part_1::solve_part_1();
-    part_2::solve_part_2();
+    solve_part_1();
+    solve_part_2();
 }
