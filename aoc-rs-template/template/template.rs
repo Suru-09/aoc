@@ -1,5 +1,3 @@
-use std::fs;
-
 const INPUT: &str = "input.txt";
 const EXAMPLE: &str = "example.txt";
 
