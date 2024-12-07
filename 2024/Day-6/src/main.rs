@@ -165,5 +165,5 @@ mod utils {
 
 fn main() {
     solve_part_1(); // 4711
-    solve_part_2(); //
+    solve_part_2(); // 1562
 }
