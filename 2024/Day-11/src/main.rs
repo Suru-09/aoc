@@ -10,10 +10,7 @@ pub fn solve_part_1() {
     let pebbles = parse_pebbles(&pebbles_str);
 
     let now = Instant::now();
-    let result;
-    {
-        result = pebble_expansion(&pebbles, 25);
-    }
+    let result = pebble_expansion(&pebbles, 25);
     let elapsed = now.elapsed();
     println!("Elapsed: {:.2?}", elapsed);
     println!("Result for part1: {}", result);
@@ -24,10 +21,7 @@ pub fn solve_part_2() {
     let pebbles = parse_pebbles(&pebbles_str);
 
     let now = Instant::now();
-    let result;
-    {
-        result = pebble_expansion(&pebbles, 200);
-    }
+    let result = pebble_expansion(&pebbles, 75);
     let elapsed = now.elapsed();
     println!("Elapsed: {:.2?}", elapsed);
 
@@ -46,39 +40,18 @@ fn pebble_expansion(pebbles: &Vec<u128>, blinks: u128) -> u128 {
         });
 
     for _ in 0..blinks {
-        let mut evaluated: Vec<Vec<(u128, u128)>> = vec![];
-        let mut removed_pebbles = vec![];
-        for (pebble, p_count) in pebbles_count.iter() {
-            evaluated.push(
-                evaluate_pebble(*pebble)
-                    .iter()
-                    .map(|pebble| (*pebble, *p_count))
-                    .collect(),
-            );
-            removed_pebbles.push((*pebble, *p_count));
-        }
-
-        removed_pebbles
-            .iter()
-            .for_each(|(pebble, p_count)| match pebbles_count.get(pebble) {
-                Some(val) => {
-                    if *val > *p_count {
-                        *pebbles_count.get_mut(pebble).unwrap() = *val - *p_count;
-                    } else {
-                        pebbles_count.remove(pebble);
+        let mut pebbles_temp: HashMap<u128, u128> = HashMap::new();
+        for (pebble, p_counter) in pebbles_count.iter() {
+            evaluate_pebble(*pebble).into_iter().for_each(|pebl| {
+                match pebbles_temp.get_mut(&pebl) {
+                    Some(val) => *val += *p_counter,
+                    None => {
+                        pebbles_temp.insert(pebl, *p_counter);
                     }
                 }
-                None => {}
             });
-
-        evaluated.iter().flatten().for_each(|(pebble, p_count)| {
-            match pebbles_count.get_mut(pebble) {
-                Some(val) => *val += p_count,
-                None => {
-                    pebbles_count.insert(*pebble, *p_count);
-                }
-            }
-        });
+        }
+        pebbles_count = pebbles_temp;
     }
 
     pebbles_count
@@ -87,25 +60,22 @@ fn pebble_expansion(pebbles: &Vec<u128>, blinks: u128) -> u128 {
 }
 
 fn evaluate_pebble(pebble: u128) -> Vec<u128> {
-    let mut evaluated = vec![];
     if pebble == 0 {
-        evaluated.push(1);
+        vec![1]
     } else {
         let pdigits_count = digits_count(pebble);
         if pdigits_count % 2 == 0 {
-            let second_half: u128 = format!("{}", pebble)[(pdigits_count / 2) as usize..].parse().unwrap();
-            let first_half: u128 = format!("{}", pebble)[0..(pdigits_count / 2) as usize].parse().unwrap();
-            evaluated.push(first_half);
-            evaluated.push(second_half);
+            let second_half: u128 = format!("{}", pebble)[pdigits_count / 2..].parse().unwrap();
+            let first_half: u128 = format!("{}", pebble)[0..pdigits_count / 2].parse().unwrap();
+            vec![first_half, second_half]
         } else {
-            evaluated.push(pebble * 2024);
+            vec![pebble * 2024]
         }
     }
-    evaluated
 }
 
-fn digits_count(num: u128) -> u128 {
-    num.checked_ilog10().unwrap_or(0) as u128 + 1 as u128
+fn digits_count(num: u128) -> usize {
+    num.checked_ilog10().unwrap_or(0) as usize + 1 as usize
 }
 
 fn parse_pebbles(input: &str) -> Vec<u128> {
@@ -113,7 +83,7 @@ fn parse_pebbles(input: &str) -> Vec<u128> {
         .trim()
         .split(" ")
         .map(|x| x.parse::<u128>().unwrap())
-        .collect::<Vec<u128>>()
+        .collect::<Vec<_>>()
 }
 
 mod utils {
