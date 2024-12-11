@@ -63,10 +63,10 @@ fn evaluate_pebble(pebble: u128) -> Vec<u128> {
     if pebble == 0 {
         vec![1]
     } else {
-        let pdigits_count = digits_count(pebble);
+        let pdigits_count: u128 = digits_count(pebble);
         if pdigits_count % 2 == 0 {
-            let second_half: u128 = format!("{}", pebble)[pdigits_count / 2..].parse().unwrap();
-            let first_half: u128 = format!("{}", pebble)[0..pdigits_count / 2].parse().unwrap();
+            let first_half: u128 = pebble / (pdigits_count / 2);
+            let second_half: u128 = pebble % (pdigits_count / 2);
             vec![first_half, second_half]
         } else {
             vec![pebble * 2024]
@@ -74,8 +74,8 @@ fn evaluate_pebble(pebble: u128) -> Vec<u128> {
     }
 }
 
-fn digits_count(num: u128) -> usize {
-    num.checked_ilog10().unwrap_or(0) as usize + 1 as usize
+fn digits_count(num: u128) -> u128 {
+    num.checked_ilog10().unwrap_or(0) as u128 + 1
 }
 
 fn parse_pebbles(input: &str) -> Vec<u128> {
