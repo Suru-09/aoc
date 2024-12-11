@@ -65,8 +65,9 @@ fn evaluate_pebble(pebble: u128) -> Vec<u128> {
     } else {
         let pdigits_count: u128 = digits_count(pebble);
         if pdigits_count % 2 == 0 {
-            let first_half: u128 = pebble / (pdigits_count / 2);
-            let second_half: u128 = pebble % (pdigits_count / 2);
+            let poweeer: u128 = 10u32.pow(pdigits_count as u32 / 2) as u128;
+            let first_half: u128 = pebble / poweeer;
+            let second_half: u128 = pebble % poweeer;
             vec![first_half, second_half]
         } else {
             vec![pebble * 2024]
