@@ -26,7 +26,7 @@ pub fn solve_part_2() {
     let now = Instant::now();
     let result;
     {
-        result = pebble_expansion(&pebbles, 75);
+        result = pebble_expansion(&pebbles, 200);
     }
     let elapsed = now.elapsed();
     println!("Elapsed: {:.2?}", elapsed);
@@ -34,8 +34,8 @@ pub fn solve_part_2() {
     println!("Result for part2: {}", result);
 }
 
-fn pebble_expansion(pebbles: &Vec<usize>, blinks: usize) -> usize {
-    let mut pebbles_count: HashMap<usize, usize> = HashMap::new();
+fn pebble_expansion(pebbles: &Vec<u128>, blinks: u128) -> u128 {
+    let mut pebbles_count: HashMap<u128, u128> = HashMap::new();
     pebbles
         .iter()
         .for_each(|pebble| match pebbles_count.get_mut(pebble) {
@@ -46,7 +46,7 @@ fn pebble_expansion(pebbles: &Vec<usize>, blinks: usize) -> usize {
         });
 
     for _ in 0..blinks {
-        let mut evaluated: Vec<Vec<(usize, usize)>> = vec![];
+        let mut evaluated: Vec<Vec<(u128, u128)>> = vec![];
         let mut removed_pebbles = vec![];
         for (pebble, p_count) in pebbles_count.iter() {
             evaluated.push(
@@ -83,18 +83,18 @@ fn pebble_expansion(pebbles: &Vec<usize>, blinks: usize) -> usize {
 
     pebbles_count
         .iter()
-        .fold(0usize, |sum, (_, p_count)| sum + p_count)
+        .fold(0u128, |sum, (_, p_count)| sum + p_count)
 }
 
-fn evaluate_pebble(pebble: usize) -> Vec<usize> {
+fn evaluate_pebble(pebble: u128) -> Vec<u128> {
     let mut evaluated = vec![];
     if pebble == 0 {
         evaluated.push(1);
     } else {
         let pdigits_count = digits_count(pebble);
         if pdigits_count % 2 == 0 {
-            let second_half: usize = format!("{}", pebble)[pdigits_count / 2..].parse().unwrap();
-            let first_half: usize = format!("{}", pebble)[0..pdigits_count / 2].parse().unwrap();
+            let second_half: u128 = format!("{}", pebble)[(pdigits_count / 2) as usize..].parse().unwrap();
+            let first_half: u128 = format!("{}", pebble)[0..(pdigits_count / 2) as usize].parse().unwrap();
             evaluated.push(first_half);
             evaluated.push(second_half);
         } else {
@@ -104,16 +104,16 @@ fn evaluate_pebble(pebble: usize) -> Vec<usize> {
     evaluated
 }
 
-fn digits_count(num: usize) -> usize {
-    num.checked_ilog10().unwrap_or(0) as usize + 1 as usize
+fn digits_count(num: u128) -> u128 {
+    num.checked_ilog10().unwrap_or(0) as u128 + 1 as u128
 }
 
-fn parse_pebbles(input: &str) -> Vec<usize> {
+fn parse_pebbles(input: &str) -> Vec<u128> {
     input
         .trim()
         .split(" ")
-        .map(|x| x.parse::<usize>().unwrap())
-        .collect::<Vec<usize>>()
+        .map(|x| x.parse::<u128>().unwrap())
+        .collect::<Vec<u128>>()
 }
 
 mod utils {
