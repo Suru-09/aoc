@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 const INPUT: &str = "input.txt";
 const EXAMPLE: &str = "example.txt";
@@ -27,25 +27,82 @@ pub fn solve_part_1() {
 
     let result = garden_groups.iter().fold(0usize, |sum, group| {
         sum + group.iter().fold(0usize, |perimeter, element| {
-            perimeter + (4 - find_neighbors(*element, &garden))
+            perimeter + (4 - find_neighbors(*element, &garden).len())
         }) * group.len()
     });
     println!("Result for part1: {}", result);
 }
 
-pub fn solve_part_2() {}
+pub fn solve_part_2() {
+    let garden_str = utils::read_file(INPUT);
+    let garden = parse_garden(&garden_str);
+    //println!("Garden: {:?}", garden);
 
-fn find_neighbors(element: (usize, usize), garden: &Vec<Vec<char>>) -> usize {
+    let (width, height) = (garden[0].len(), garden.len());
+
+    let mut visited = vec![vec![false; width]; height];
+    let mut garden_groups = vec![];
+
+    for i in 0..garden.len() {
+        for (j, val) in garden[i].iter().enumerate() {
+            if !visited[i][j] {
+                let mut group = vec![(i, j)];
+                find_group(&garden, &mut visited, &mut group, (i, j), *val);
+                garden_groups.push(group);
+            }
+        }
+    }
+
+    let result = garden_groups.iter().fold(0usize, |sum, group| {
+        let corners = count_corners(group);
+        // println!(
+        //     "Area * corners = {} * {} = {}",
+        //     group.len(),
+        //     corners,
+        //     corners * group.len()
+        // );
+        sum + corners * group.len()
+    });
+    println!("Result for part2: {}", result);
+}
+
+fn count_corners(group: &Vec<(usize, usize)>) -> usize {
+    let mut corners = 0;
+
+    for dir in DIRS {
+        let mut sides = HashSet::new();
+        for pos in group {
+            let (new_x, new_y): (i32, i32) = (pos.0 as i32 + dir.0, pos.1 as i32 + dir.1);
+            if !group.contains(&(new_x as usize, new_y as usize)) {
+                sides.insert((new_x, new_y));
+            }
+        }
+        let mut remove = HashSet::new();
+        for side in sides.iter() {
+            let (mut new_x, mut new_y): (i32, i32) = (side.0 as i32 + dir.1, side.1 as i32 + dir.0);
+            if sides.contains(&(new_x, new_y)) {
+                remove.insert((new_x, new_y));
+                // new_x += dir.1;
+                // new_y += dir.0;
+            }
+        }
+        corners += sides.len() - remove.len();
+    }
+
+    corners
+}
+
+fn find_neighbors(element: (usize, usize), garden: &Vec<Vec<char>>) -> Vec<(usize, usize)> {
     let (width, height) = (garden[0].len(), garden.len());
     let (x, y) = element;
 
-    let mut neighbors = 0;
+    let mut neighbors = vec![];
 
     for dir in DIRS {
         if !is_out_of_bounds((width, height), element, dir) {
             let (new_x, new_y) = ((x as i32 + dir.0) as usize, (y as i32 + dir.1) as usize);
             if garden[new_x][new_y] == garden[x][y] {
-                neighbors += 1;
+                neighbors.push((new_x, new_y));
             }
         }
     }
