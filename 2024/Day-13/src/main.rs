@@ -55,6 +55,10 @@ fn find_least_tokens(claw_machine: &ClawMachine, is_part_2: bool) -> usize {
     //     times_a_pressed, times_b_pressed
     // );
 
+    if !is_part_2 && (times_a_pressed >= 100 || times_b_pressed >= 100) {
+        return 0;
+    }
+
     let result = 3 * times_a_pressed + times_b_pressed;
     if (times_a_pressed * ax + times_b_pressed * bx == px
         && times_a_pressed * ay + times_b_pressed * by == py)
