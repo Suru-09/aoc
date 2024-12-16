@@ -59,14 +59,18 @@ fn is_out_of_bounds(
     let (off_x, off_y) = DIRS[dir];
 
     if backwards {
-        if old_x - off_x < 0 || old_x - off_x >= width || old_y < 0 || old_y - off_y >= height {
+        if old_x - off_x < 0
+            || old_x - off_x >= width
+            || old_y - off_y < 0
+            || old_y - off_y >= height
+        {
             return true;
         } else {
             return false;
         }
     }
 
-    if old_x + off_x < 0 || old_x + off_x >= width || old_y < 0 || old_y + off_y >= height {
+    if old_x + off_x < 0 || old_x + off_x >= width || old_y + off_y < 0 || old_y + off_y >= height {
         true
     } else {
         false
@@ -82,7 +86,7 @@ fn lowest_score(
     queue.push_back((start_dir, 0));
     let (width, height) = (maze[0].len(), maze.len());
     let mut visited = HashMap::new();
-    visited.insert(start_dir, usize::MAX);
+    visited.insert(start_dir, 0);
 
     while let Some(((x, y, dir), cost)) = queue.pop_front() {
         if cost > *visited.get(&(x, y, dir)).unwrap() {
@@ -158,49 +162,78 @@ fn recreate_path(
     }
 
     let (width, height) = (maze[0].len(), maze.len());
-    let mut shortest_path = vec![];
+    let mut shortest_path = vec![queue[0]];
 
     while let Some((x, y, dir)) = queue.pop_front() {
         let current_cost = *visited.get(&(x, y, dir)).unwrap();
+        println!("Current cost: {}, x: {}, y: {}", current_cost, x, y);
 
         if !is_out_of_bounds((width, height), (x, y), dir, true) {
             let (new_x, new_y) = (
                 (x as isize - DIRS[dir].0) as usize,
                 (y as isize - DIRS[dir].1) as usize,
             );
+            println!("dir: {} New_x: {}, new_y: {}", dir, new_x, new_y);
+
             if current_cost > 0 {
                 let backwards_cost = current_cost - 1;
-                if visited.get(&(new_x, new_y, dir)).is_some()
-                    && *visited.get(&(new_x, new_y, dir)).unwrap() == backwards_cost
+                let new_pos = (new_x, new_y, dir);
+                println!(
+                    "Backwards_cost: {}, visited new: {:?}",
+                    backwards_cost,
+                    visited.get(&new_pos)
+                );
+                if visited.get(&new_pos).is_some()
+                    && *visited.get(&new_pos).unwrap() == backwards_cost
                 {
-                    shortest_path.push((x, y, dir));
-                    queue.push_back((new_x, new_y, dir));
+                    shortest_path.push(new_pos);
+                    queue.push_back(new_pos);
                 }
             }
         }
 
         // turn left/right
-        for d in get_left_right(dir).into_iter() {
+        for d in get_left_right_backwards(dir).into_iter() {
             if !is_out_of_bounds((width, height), (x, y), d, true) {
                 let (new_x, new_y) = (
                     (x as isize - DIRS[d].0) as usize,
                     (y as isize - DIRS[d].1) as usize,
                 );
 
+                println!("New_x: {}, new_y: {}", new_x, new_y);
+
                 if current_cost > 0 {
                     let backwards_cost = current_cost - 1001;
-                    if visited.get(&(new_x, new_y, d)).is_some()
-                        && *visited.get(&(new_x, new_y, d)).unwrap() == backwards_cost
+                    let new_pos = (new_x, new_y, d);
+                    println!(
+                        "Backwards_cost: {}, visited new: {:?}",
+                        backwards_cost,
+                        visited.get(&new_pos)
+                    );
+                    if visited.get(&new_pos).is_some()
+                        && *visited.get(&new_pos).unwrap() == backwards_cost
                     {
-                        shortest_path.push((x, y, dir));
-                        queue.push_back((new_x, new_y, d));
+                        shortest_path.push(new_pos);
+                        queue.push_back(new_pos);
                     }
                 }
             }
         }
     }
 
+    print_maze(maze, &shortest_path);
     println!("Shortest path: {:?}", shortest_path);
+    println!(
+        "Visited: {:?}",
+        visited
+            .iter()
+            .filter_map(|((x, y, dir), _)| if *x == 13 && *y == 13 {
+                Some((*x, *y, *dir))
+            } else {
+                None
+            })
+            .collect::<Vec<(usize, usize, usize)>>()
+    );
     shortest_path.len()
 }
 
@@ -212,13 +245,36 @@ fn get_left_right(dir: usize) -> Vec<usize> {
     }
 }
 
+fn get_left_right_backwards(dir: usize) -> Vec<usize> {
+    match dir {
+        0 | 3 => vec![1, 2],
+        1 | 2 => vec![0, 3],
+        _ => panic!("Out of bounds"),
+    }
+}
+
 fn parse_maze(input: &str) -> Vec<Vec<char>> {
     input
+        .trim()
         .split("\n")
         .collect::<Vec<&str>>()
         .iter()
         .map(|str| str.chars().collect::<Vec<char>>())
         .collect::<Vec<Vec<char>>>()
+}
+
+fn print_maze(maze: &Vec<Vec<char>>, shortest_path: &Vec<(usize, usize, usize)>) {
+    let mut maze_local = maze.clone();
+    for (x, y, _) in shortest_path {
+        maze_local[*x][*y] = 'O';
+    }
+
+    for x in 0..maze_local.len() {
+        for y in 0..maze_local[x].len() {
+            print!("{}", maze_local[x][y]);
+        }
+        println!("");
+    }
 }
 
 mod utils {
