@@ -11,7 +11,7 @@ pub fn solve_part_1() {
     let input = utils::read_file_lines(EXAMPLE);
     println!("Input: {:?}", input);
     input.iter().for_each(|code| code.chars().for_each(|ch| {
-      let code_part: usize = if ch == 'A' {10} else {
+      let code_part: usize = if ch == 'A' { 10 } else {
         ch.to_digit(10).unwrap() as usize
       };
       println!("Bfs: {:?}\nCode Part: {}", bfs(code_part), ch);
