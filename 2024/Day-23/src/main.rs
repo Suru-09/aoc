@@ -4,44 +4,56 @@ const INPUT: &str = "input.txt";
 const EXAMPLE: &str = "example.txt";
 
 pub fn solve_part_1() {
-    let connections = parse_connections(EXAMPLE);
-    let mut pcs = all_computers(&connections);
+    let connections = parse_connections(INPUT);
+    let pcs = all_computers(&connections);
     let connections_map = connections_map(&connections);
 
     let mut result = 0;
     let mut pcs_removed = vec![];
     for pc in &pcs {
-        if pcs_removed.contains(&pc) {
-          continue;
-        }
-
         let set1 = connections_map
             .get(&pc)
             .unwrap()
+            .iter()
+            .filter(|str| !pcs_removed.contains(str))
+            .map(|str| str.to_owned())
+            .collect::<HashSet<_>>()
             .intersection(&pcs)
             .map(|str| str.to_owned())
             .collect::<HashSet<_>>();
         let mut set1_removed = vec![];
 
         for el in &set1 {
-          if set1_removed.contains(&el) {
-            continue;
-          }
+            let binding = connections_map
+                .get(&el)
+                .unwrap()
+                .iter()
+                .filter(|str| !pcs_removed.contains(str))
+                .map(|str| str.to_owned())
+                .collect::<HashSet<_>>();
+            let set1_binding = set1
+                .iter()
+                .filter(|str| !set1_removed.contains(str))
+                .map(|str| str.to_owned())
+                .collect::<HashSet<_>>();
+            let set2 = binding.intersection(&set1_binding).collect::<HashSet<_>>();
 
-          let set2 = connections_map.get(&el).unwrap().intersection(&set1).collect::<HashSet<_>>();
-          if pc.starts_with("t") || el.starts_with("t") {
-            result += set2.len();
-          } else {
-            result += set2.iter().fold(0usize, |acc, el| {
-              if el.starts_with("t") {
-                acc + 1
-              } else {
-                acc
-              }
-            });
-          }
+            if pc.starts_with("t") || el.starts_with("t") {
+                result += set2.len();
+            } else {
+                result += set2.iter().fold(
+                    0usize,
+                    |acc, el| {
+                        if el.starts_with("t") {
+                            acc + 1
+                        } else {
+                            acc
+                        }
+                    },
+                );
+            }
 
-          set1_removed.push(el);
+            set1_removed.push(el);
         }
 
         pcs_removed.push(pc);
@@ -50,7 +62,56 @@ pub fn solve_part_1() {
     println!("Result for part1: {}", result);
 }
 
-pub fn solve_part_2() {}
+pub fn solve_part_2() {
+  let connections = parse_connections(INPUT);
+  let pcs = all_computers(&connections);
+  let connections_map = connections_map(&connections);
+
+  let mut connected_sets = HashSet::new();
+  let largest_network = lan_party(&pcs, &connections_map, &mut connected_sets);
+
+  let mut network_v = largest_network.iter().collect::<Vec<_>>();
+  network_v.sort();
+  print!("Result for part2: ");
+  for el in network_v {
+    print!("{},", el);
+  }
+  println!("");
+}
+
+fn lan_party(pcs: &HashSet<String>, conns: &HashMap<&String, HashSet<String>>, connected_sets: &mut HashSet<String>) -> HashSet<String> {
+  if pcs.is_empty() {
+    return connected_sets.clone();
+  }
+
+  let mut largest = connected_sets.clone();
+
+  let mut pcs_removed = vec![];
+  for pc in pcs {
+    connected_sets.insert(pc.clone());
+    let set = conns
+        .get(&pc)
+        .unwrap()
+        .iter()
+        .filter(|str| !pcs_removed.contains(*str))
+        .map(|str| str.to_owned())
+        .collect::<HashSet<_>>()
+        .intersection(&pcs)
+        .map(|str| str.to_owned())
+        .collect::<HashSet<_>>();
+
+    let resulting_set = lan_party(&set, conns, connected_sets);
+
+    if resulting_set.len() > largest.len() {
+      largest = resulting_set.clone();
+    }
+
+    connected_sets.remove(pc);
+    pcs_removed.push(pc.clone());
+  }
+
+  largest
+}
 
 fn parse_connections(input: &str) -> HashSet<(String, String)> {
     utils::read_file_lines(input)
