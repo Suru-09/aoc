@@ -1,10 +1,10 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 const INPUT: &str = "input.txt";
 const EXAMPLE: &str = "example.txt";
 
 pub fn solve_part_1() {
-    let input = utils::read_file(EXAMPLE);
+    let input = utils::read_file(INPUT);
     let (wires, gates) = parse(&input);
     let mut wires_map: HashMap<&str, u8> = wires.into_iter().collect();
     compute_values(&mut wires_map, &gates);
@@ -13,21 +13,30 @@ pub fn solve_part_1() {
         .filter(|(wire, _)| wire.contains("z"))
         .map(|(key, val)| (*key, *val))
         .collect::<Vec<(&str, u8)>>();
-    wires_vec.sort();
+    wires_vec.sort_by(|a, b| b.cmp(a)); // sort reversed
     println!("Wires: {:?}", wires_vec);
 
     let result = wires_vec
         .iter()
-        .fold(0u128, |acc, (_, val)| (acc | (*val) as u128) << 2);
-    println!("Result for part1: {}", result);
+        .fold(0u128, |acc, (_, val)| (acc | *val as u128) << 1);
+    println!("Result for part1: {}", result >> 1);
 }
 
 pub fn solve_part_2() {}
 
 fn compute_values<'a>(wires: &mut HashMap<&'a str, u8>, gates: &'a Vec<Gate>) {
-    for gate in gates {
-        let input1: u8 = *wires.get(&gate.input1).unwrap_or(&0u8);
-        let input2: u8 = *wires.get(&gate.input2).unwrap_or(&0u8);
+    let mut queue = gates.iter().collect::<VecDeque<_>>();
+    while let Some(gate) = queue.pop_front() {
+        let opt1 = wires.get(&gate.input1);
+        let opt2 = wires.get(&gate.input2);
+
+        if opt1.is_none() || opt2.is_none() {
+            queue.push_back(gate);
+            continue;
+        }
+
+        let input1 = *opt1.unwrap();
+        let input2 = *opt2.unwrap();
 
         let output = match gate.gate_type {
             GateType::AND => input1 & input2,
