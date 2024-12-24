@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 const INPUT: &str = "input.txt";
 const EXAMPLE: &str = "example.txt";
@@ -14,7 +14,6 @@ pub fn solve_part_1() {
         .map(|(key, val)| (*key, *val))
         .collect::<Vec<(&str, u8)>>();
     wires_vec.sort_by(|a, b| b.cmp(a)); // sort reversed
-    println!("Wires: {:?}", wires_vec);
 
     let result = wires_vec
         .iter()
@@ -22,33 +21,60 @@ pub fn solve_part_1() {
     println!("Result for part1: {}", result >> 1);
 }
 
-pub fn solve_part_2() {}
+pub fn solve_part_2() {
+    let input = utils::read_file(INPUT);
+    let (wires, gates) = parse(&input);
+    let mut wires_map: HashMap<&str, u8> = wires.into_iter().collect();
+    compute_values(&mut wires_map, &gates);
+
+    let mut broken = HashSet::new();
+    for g in &gates {
+        if g.gate_type != GateType::XOR && g.output != "z45" && g.output.starts_with("z") {
+            broken.insert(g.output);
+        }
+
+        if g.input1.starts_with("z") {
+            broken.insert(g.input1);
+        }
+
+        if g.input2.starts_with("z") {
+            broken.insert(g.input2);
+        }
+
+        if g.gate_type == GateType::XOR
+            && !g.output.starts_with("z")
+            && !((g.input1.starts_with("x") && g.input2.starts_with("y"))
+                || (g.input1.starts_with("y") && g.input1.starts_with("x")))
+        {
+            broken.insert(g.output);
+        }
+    }
+
+    let mut broken_v = broken.into_iter().collect::<Vec<_>>();
+    broken_v.sort();
+    println!("Result for part2: len: {} and concat: {}", broken_v.len(), broken_v.join(","));
+}
 
 fn compute_values<'a>(wires: &mut HashMap<&'a str, u8>, gates: &'a Vec<Gate>) {
     let mut queue = gates.iter().collect::<VecDeque<_>>();
     while let Some(gate) = queue.pop_front() {
-        let opt1 = wires.get(&gate.input1);
-        let opt2 = wires.get(&gate.input2);
-
-        if opt1.is_none() || opt2.is_none() {
-            queue.push_back(gate);
-            continue;
+        match (wires.get(&gate.input1), wires.get(&gate.input2)) {
+            (Some(input1), Some(input2)) => {
+                let output = match gate.gate_type {
+                    GateType::AND => input1 & input2,
+                    GateType::OR => input1 | input2,
+                    GateType::XOR => input1 ^ input2,
+                };
+                wires.insert(gate.output, output);
+            }
+            (_, _) => {
+                queue.push_back(gate);
+            }
         }
-
-        let input1 = *opt1.unwrap();
-        let input2 = *opt2.unwrap();
-
-        let output = match gate.gate_type {
-            GateType::AND => input1 & input2,
-            GateType::OR => input1 | input2,
-            GateType::XOR => input1 ^ input2,
-        };
-
-        wires.insert(gate.output, output);
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 enum GateType {
     XOR,
     OR,
